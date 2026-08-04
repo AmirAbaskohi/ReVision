@@ -28,35 +28,38 @@ AgentNet contains GUI interaction trajectories with:
 
 ### Target Data Format (Qwen)
 
-Converts to Qwen's multi-turn conversation format:
+Converts to a multi-turn conversation format where the assistant's reasoning is
+followed by a structured `<tool_call>` block:
 ```json
 {
   "messages": [
     {
       "role": "user",
-      "content": "Task instruction<image>"
+      "content": "## Task: ...\n\nWe are now on this page. What should we do next?\n<image>"
     },
     {
       "role": "assistant",
-      "content": "Action: Click button\nCode: pyautogui.click(x=0.5, y=0.5)"
+      "content": "The last action opened GIMP, I will now open the file. To load the image I'll press Ctrl+O.\n<tool_call>\n{\"name\": \"computer_use\", \"arguments\": {\"type\": \"key\", \"keys\": [\"ctrl\", \"o\"]}}\n</tool_call>"
     }
   ],
   "images": [
     "path/to/image1.png",
     "path/to/image2.png"
-  ],
-  "metadata": {
-    "task_id": "...",
-    "task_completed": true,
-    "alignment_score": 8,
-    "efficiency_score": 9
-  }
+  ]
 }
 ```
 
+The assistant's reasoning text is the step's `reflection` (reflecting on the prior
+step's outcome) followed by its `thought`, concatenated as plain prose. The
+`code` (raw pyautogui/`computer.*` call) is parsed and converted into a
+`{"name": "computer_use", "arguments": {...}}` tool call. Normalized `x`/`y`
+coordinates (`[0, 1]`) are converted to pixel `coordinate: [x, y]` using the
+actual resolution of the step's screenshot (read via Pillow). Steps whose code
+can't be mapped to a supported action are dropped from that trajectory.
+
 ## Requirements
 
-- **Python 3.8+** with `tqdm` 
+- **Python 3.8+** with `tqdm`, `Pillow`
 - **HuggingFace CLI** (auto-installed by scripts)
 - **7z** for extracting split archives (auto-installed on macOS via brew)
 - **~181GB disk space** for full dataset

@@ -55,7 +55,7 @@ done
 
 # Install Python dependencies
 print_info "Installing Python dependencies..."
-pip3 install -q tqdm
+pip3 install -q tqdm Pillow
 echo ""
 
 # Step 1: Download
